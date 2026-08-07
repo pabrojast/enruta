@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: enruta-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: enruta
+      POSTGRES_PASSWORD: enruta_secret
+      POSTGRES_DB: enruta
+    ports:
+      - "5433:5432"
+    volumes:
+      - enruta_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U enruta -d enruta"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    container_name: enruta-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://enruta:enruta_secret@db:5432/enruta
+      AUTH_SECRET: enruta-dev-secret-change-in-production-32chars
+      AUTH_URL: http://localhost:3000
+      NEXTAUTH_URL: http://localhost:3000
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  enruta_pgdata:

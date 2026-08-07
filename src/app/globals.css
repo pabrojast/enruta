@@ -1,0 +1,297 @@
+@import "tailwindcss";
+
+:root {
+  --background: #05070f;
+  --foreground: #f4f7fb;
+  --card: rgba(255, 255, 255, 0.045);
+  --card-border: rgba(255, 255, 255, 0.12);
+  --neon-green: #b6ff3b;
+  --neon-cyan: #2de2c5;
+  --neon-pink: #ff2d95;
+  --muted: rgba(244, 247, 251, 0.64);
+  --muted-strong: rgba(244, 247, 251, 0.78);
+  --danger: #ff6b7a;
+  --surface-elevated: rgba(12, 16, 28, 0.92);
+  --ring: #2de2c5;
+  --header-h: 7.5rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-neon-green: var(--neon-green);
+  --color-neon-cyan: var(--neon-cyan);
+  --color-neon-pink: var(--neon-pink);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: rgba(45, 226, 197, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body {
+  background:
+    radial-gradient(1100px 560px at 8% -8%, rgba(45, 226, 197, 0.14), transparent 55%),
+    radial-gradient(900px 500px at 92% 0%, rgba(255, 45, 149, 0.12), transparent 52%),
+    radial-gradient(720px 420px at 50% 110%, rgba(182, 255, 59, 0.07), transparent 48%),
+    var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-bottom: env(safe-area-inset-bottom);
+  touch-action: manipulation;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: rgba(45, 226, 197, 0.35);
+}
+
+/* Skip link */
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -100px;
+  z-index: 100;
+  border-radius: 0.75rem;
+  background: var(--neon-cyan);
+  color: #041014;
+  padding: 0.65rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  top: 1rem;
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* Headings & long content */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Focus defaults for native controls */
+:where(a, button, input, textarea, select, summary, [role="button"]):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Numbers in dashboards/tables */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Shared select look (dark) */
+.select-field {
+  display: flex;
+  height: 2.75rem;
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+}
+
+.select-field:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Sticky page anchors under sticky header */
+[id] {
+  scroll-margin-top: calc(var(--header-h) + 1rem);
+}
+
+/* Horizontal nav scroll without ugly bars on mobile */
+.nav-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.nav-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Soft card lift on interactive surfaces */
+.card-interactive {
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card-interactive:hover {
+    transform: translateY(-2px);
+    border-color: rgba(45, 226, 197, 0.28);
+    background-color: rgba(255, 255, 255, 0.055);
+  }
+}
+
+.form-light {
+  --background: #f7f8fc;
+  --foreground: #12141c;
+  --ring: #0d9488;
+  background: #f7f8fc;
+  color: #12141c;
+  color-scheme: light;
+}
+
+.form-light input:not([type="checkbox"]):not([type="radio"]),
+.form-light textarea,
+.form-light select {
+  background: #fff !important;
+  color: #12141c !important;
+  border-color: #cfd6e4 !important;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02);
+}
+
+.form-light input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+.form-light textarea:focus-visible,
+.form-light select:focus-visible {
+  outline: none !important;
+  border-color: #0d9488 !important;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.18);
+}
+
+.form-light input::placeholder,
+.form-light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+.form-light label {
+  color: #1f2937;
+}
+
+.form-light .select-field {
+  background-color: #fff !important;
+  color: #12141c !important;
+  border-color: #cfd6e4 !important;
+}
+
+/* Botones dentro de form-light: contraste legible sobre fondo claro */
+.form-light button[data-variant="secondary"],
+.form-light .btn-secondary-light {
+  background: #eef2f7 !important;
+  color: #0f172a !important;
+  border-color: #d5dbe7 !important;
+}
+
+.form-light .form-hint {
+  color: #6b7280;
+}
+
+/* Alertas legibles sobre superficie clara */
+.form-light [role="status"] {
+  color: inherit;
+}
+
+.form-light [role="status"].border-neon-cyan\/30,
+.form-light [class*="border-neon-cyan"] {
+  border-color: rgba(13, 148, 136, 0.35) !important;
+  background: rgba(13, 148, 136, 0.08) !important;
+  color: #0f766e !important;
+}
+
+.form-light [class*="border-neon-green"] {
+  border-color: rgba(22, 163, 74, 0.35) !important;
+  background: rgba(22, 163, 74, 0.08) !important;
+  color: #166534 !important;
+}
+
+.form-light [class*="border-amber"] {
+  border-color: rgba(217, 119, 6, 0.35) !important;
+  background: rgba(251, 191, 36, 0.12) !important;
+  color: #92400e !important;
+}
+
+.form-light .check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e4e8f0;
+  background: #fff;
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+
+.form-light .check-row:hover {
+  border-color: #99f6e4;
+  background: #f0fdfa;
+}
+
+.form-light .check-row:has(input:focus-visible) {
+  outline: 2px solid #0d9488;
+  outline-offset: 2px;
+}
+
+.form-light .check-row input[type="checkbox"] {
+  margin-top: 0.2rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: #0d9488;
+  flex-shrink: 0;
+}
+
+.grid-noise {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Route stage chip */
+.stage-rail {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .stage-rail {
+    grid-template-columns: 1fr 1fr;
+  }
+}
