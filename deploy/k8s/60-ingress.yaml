@@ -9,6 +9,9 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/limit-rps: "30"
     nginx.ingress.kubernetes.io/proxy-body-size: 8m
+    # El submit del cuestionario genera el informe con el LLM (~60-90s).
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "180"
 spec:
   ingressClassName: nginx
   tls:

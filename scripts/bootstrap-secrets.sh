@@ -44,9 +44,10 @@ kubectl -n "$NS" create secret generic enruta-env \
   --from-literal=SMTP_USER="apikey" \
   --from-literal=SMTP_PASS="$SENDGRID" \
   --from-literal=SMTP_FROM="ENRUTA <noreply@aquedra.com>" \
-  --from-literal=AI_BASE_URL="https://ai.creaciv.com/v1" \
+  --from-literal=AI_BASE_URL="http://ai-orchestrator.ai-orchestrator.svc.cluster.local/v1" \
   --from-literal=AI_API_KEY="$AI_KEY" \
-  --from-literal=AI_MODEL="creaciv/deepseek-v4-pro" \
+  --from-literal=AI_MODEL="deepseek-r1:8b" \
+  --from-literal=AI_TIMEOUT_MS="120000" \
   --dry-run=client -o yaml | kubectl apply -f -
 
 echo

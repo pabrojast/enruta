@@ -70,7 +70,12 @@ export function buildReportContent(params: {
   };
 }
 
-const aiField = z.string().trim().min(20).max(2000);
+// El modelo a veces entrega arreglos donde se espera texto: se normalizan a
+// párrafos en vez de descartar la respuesta completa.
+const aiField = z
+  .union([z.string(), z.array(z.string())])
+  .transform((v) => (Array.isArray(v) ? v.join("\n\n") : v).trim())
+  .pipe(z.string().min(20).max(4000));
 const aiReportSchema = z.object({
   introduction: aiField,
   processSummary: aiField,
@@ -87,6 +92,16 @@ const aiReportSchema = z.object({
   nextSteps: z.array(z.string().trim().min(10).max(400)).min(3).max(6),
   actionPlan: aiField,
 });
+
+// El modelo puede envolver el JSON en fences ```json o anteponer razonamiento.
+function extractJson(raw: string): string {
+  const start = raw.indexOf("{");
+  const end = raw.lastIndexOf("}");
+  if (start === -1 || end <= start) {
+    throw new Error("Respuesta del LLM sin objeto JSON");
+  }
+  return raw.slice(start, end + 1);
+}
 
 /**
  * Genera el borrador del informe con el LLM (DeepSeek vía gateway) y cae a la
@@ -118,7 +133,8 @@ export async function generateReportContent(
         "en español chileno neutro, tuteando al estudiante. Nunca prometes resultados",
         "ni indicas una única carrera 'correcta'; abres alternativas (universitarias,",
         "técnicas, oficios) y siempre invitas a conversar con el orientador del colegio.",
-        "Respondes SOLO un objeto JSON con exactamente estas claves de texto:",
+        "Respondes SOLO un objeto JSON con exactamente estas claves de texto",
+        "(cada una UN string de 2-4 frases, nunca un arreglo):",
         "introduction, processSummary, generalProfile, interests, skills, values,",
         "strengths, toExplore, routes, trades, activities, actionPlan,",
         "y dos arreglos de strings: reflectionQuestions (3-6) y nextSteps (3-6).",
@@ -133,7 +149,7 @@ export async function generateReportContent(
       ].join("\n\n"),
       jsonMode: true,
     });
-    const parsed = aiReportSchema.parse(JSON.parse(raw));
+    const parsed = aiReportSchema.parse(JSON.parse(extractJson(raw)));
     return {
       content: { ...parsed, disclaimer: DISCLAIMER },
       generatedBy: "deepseek",

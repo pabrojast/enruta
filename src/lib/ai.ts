@@ -4,8 +4,12 @@
  * consumidores deben usar su camino determinístico.
  */
 
-const DEFAULT_MODEL = "creaciv/deepseek-v4-pro";
-const TIMEOUT_MS = 60_000;
+const DEFAULT_MODEL = "deepseek-r1:8b";
+
+function timeoutMs(): number {
+  const n = Number(process.env.AI_TIMEOUT_MS);
+  return Number.isFinite(n) && n > 0 ? n : 60_000;
+}
 
 export function aiEnabled(): boolean {
   return Boolean(process.env.AI_BASE_URL && process.env.AI_API_KEY);
@@ -23,7 +27,7 @@ export async function chatCompletion(params: {
   }
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs());
   try {
     const res = await fetch(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
       method: "POST",
