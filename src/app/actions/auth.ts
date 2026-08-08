@@ -8,6 +8,7 @@ import { db } from "@/db";
 import { courses, schools, students, users } from "@/db/schema";
 import { signIn, signOut } from "@/lib/auth";
 import { homeForRole, type Role } from "@/lib/rbac";
+import { DEMO_ACCOUNTS } from "@/lib/demo-accounts";
 
 const loginSchema = z.object({
   email: z.string().email("Correo inválido"),
@@ -60,6 +61,38 @@ export async function loginAction(
   } catch (e) {
     if (e instanceof AuthError) {
       return { error: "Correo o contraseña incorrectos" };
+    }
+    throw e;
+  }
+}
+
+export async function demoLoginAction(
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const email = String(formData.get("email") || "").toLowerCase().trim();
+  const password = process.env.DEMO_PASSWORD;
+  if (!password || !DEMO_ACCOUNTS.some((a) => a.email === email)) {
+    return { error: "Cuenta demo no disponible" };
+  }
+
+  try {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+    if (!user) return { error: "Cuenta demo no disponible" };
+
+    await signIn("credentials", {
+      email,
+      password,
+      redirectTo: homeForRole(user.role as Role),
+    });
+    return { ok: true };
+  } catch (e) {
+    if (e instanceof AuthError) {
+      return { error: "Cuenta demo no disponible" };
     }
     throw e;
   }

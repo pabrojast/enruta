@@ -36,7 +36,9 @@ Abre [http://localhost:3000](http://localhost:3000).
 
 ## Credenciales demo
 
-Contraseña para **todos** los usuarios demo: `EnrutaDemo2026!`
+Contraseña **local** para todos los usuarios demo: `EnrutaDemo2026!` (el valor
+de `DEMO_PASSWORD`). En producción esa contraseña se rota y no se publica: la
+demo se explora con los botones **"Explorar la demo"** de la página de login.
 
 | Rol | Correo |
 |-----|--------|
