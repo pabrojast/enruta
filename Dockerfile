@@ -6,10 +6,24 @@ FROM base AS deps
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
+# Migraciones Drizzle: se corre como Job de k8s (con 2+ réplicas dos migrate
+# concurrentes en el CMD se pisarían; la imagen standalone no lleva drizzle/).
+FROM deps AS migrator
+COPY drizzle.config.ts tsconfig.json ./
+COPY drizzle ./drizzle
+COPY src/db ./src/db
+COPY src/lib ./src/lib
+COPY src/data ./src/data
+COPY scripts ./scripts
+CMD ["pnpm", "db:migrate"]
+
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+# DSN dummy solo para que `next build` evalúe módulos que exigen DATABASE_URL;
+# postgres.js no conecta hasta la primera query.
+ENV DATABASE_URL=postgresql://build:build@localhost:5432/build
 RUN pnpm build
 
 FROM base AS runner

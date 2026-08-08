@@ -58,10 +58,12 @@ export async function requestPasswordResetAction(
     body: `Hola,\n\nUsa este token en ${resetUrl} para restablecer tu contraseña:\n\n${token}\n\nExpira en 1 hora.`,
   });
 
-  // Sin SMTP devolvemos token para demo local
+  // Sin SMTP devolvemos token para demo local (nunca en producción)
+  const isDemoEnv =
+    process.env.NODE_ENV !== "production" && !process.env.SMTP_HOST;
   return {
     ok: true,
-    demoToken: process.env.SMTP_HOST ? undefined : token,
+    demoToken: isDemoEnv ? token : undefined,
   };
 }
 

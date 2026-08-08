@@ -1,0 +1,85 @@
+# replicas: 1 + strategy Recreate porque uploads/ va en un PVC local-path (RWO)
+# — deuda: migrar uploads a S3 (Garage) para poder escalar horizontal.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: enruta-uploads
+  namespace: enruta
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enruta
+  namespace: enruta
+  labels:
+    app: enruta
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: enruta
+  template:
+    metadata:
+      labels:
+        app: enruta
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull
+      containers:
+        - name: app
+          image: ghcr.io/pabrojast/enruta:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: enruta-env
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+          resources:
+            requests:
+              cpu: 25m
+              memory: 256Mi
+            limits:
+              memory: 768Mi
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            periodSeconds: 30
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: enruta-uploads
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: enruta
+  namespace: enruta
+spec:
+  selector:
+    app: enruta
+  ports:
+    - port: 3000
+      targetPort: 3000

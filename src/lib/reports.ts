@@ -1,4 +1,6 @@
+import { z } from "zod";
 import { RIASEC, DIMENSION_ORDER, type DimensionCode } from "./dimensions";
+import { aiEnabled, chatCompletion } from "./ai";
 import type { ReportContent } from "@/db/schema";
 
 const DISCLAIMER =
@@ -66,6 +68,80 @@ export function buildReportContent(params: {
     actionPlan: `Plan preliminar: 1) Conversar el informe. 2) Explorar alternativas relacionadas con ${topLabels || "tus intereses"}. 3) Registrar una reflexión en tu portafolio. 4) Definir un próximo paso concreto para los próximos 30 días.`,
     disclaimer: DISCLAIMER,
   };
+}
+
+const aiField = z.string().trim().min(20).max(2000);
+const aiReportSchema = z.object({
+  introduction: aiField,
+  processSummary: aiField,
+  generalProfile: aiField,
+  interests: aiField,
+  skills: aiField,
+  values: aiField,
+  strengths: aiField,
+  toExplore: aiField,
+  routes: aiField,
+  trades: aiField,
+  activities: aiField,
+  reflectionQuestions: z.array(z.string().trim().min(10).max(400)).min(3).max(6),
+  nextSteps: z.array(z.string().trim().min(10).max(400)).min(3).max(6),
+  actionPlan: aiField,
+});
+
+/**
+ * Genera el borrador del informe con el LLM (DeepSeek vía gateway) y cae a la
+ * plantilla determinística ante cualquier error. El disclaimer legal se fija
+ * siempre desde el código y el informe sigue pasando por revisión profesional.
+ */
+export async function generateReportContent(
+  params: Parameters<typeof buildReportContent>[0],
+): Promise<{ content: ReportContent; generatedBy: "deepseek" | "system" }> {
+  const fallback = () => ({
+    content: buildReportContent(params),
+    generatedBy: "system" as const,
+  });
+  if (!aiEnabled()) return fallback();
+
+  const top = params.topDimensions.slice(0, 3) as DimensionCode[];
+  const profile = top
+    .map((c) => {
+      const d = RIASEC[c];
+      return `- ${d?.name ?? c} (${params.dimensions[c] ?? 0}%): ${d?.description ?? ""}`;
+    })
+    .join("\n");
+
+  try {
+    const raw = await chatCompletion({
+      system: [
+        "Eres orientador vocacional para estudiantes de enseñanza media en Chile.",
+        "Redactas borradores de informes vocacionales cálidos, claros y NO diagnósticos,",
+        "en español chileno neutro, tuteando al estudiante. Nunca prometes resultados",
+        "ni indicas una única carrera 'correcta'; abres alternativas (universitarias,",
+        "técnicas, oficios) y siempre invitas a conversar con el orientador del colegio.",
+        "Respondes SOLO un objeto JSON con exactamente estas claves de texto:",
+        "introduction, processSummary, generalProfile, interests, skills, values,",
+        "strengths, toExplore, routes, trades, activities, actionPlan,",
+        "y dos arreglos de strings: reflectionQuestions (3-6) y nextSteps (3-6).",
+        "Sin markdown fuera de los valores, sin claves extra.",
+      ].join(" "),
+      user: [
+        `Estudiante: ${params.studentName}, ${params.gradeLevel}° medio.`,
+        `Perfil RIASEC (afinidad):\n${profile || "- aún en exploración"}`,
+        `Intereses declarados: ${params.interestsSummary?.trim() || "no registrados"}`,
+        `Fortalezas declaradas: ${params.strengthsSummary?.trim() || "no registradas"}`,
+        "Genera el borrador del informe vocacional en JSON.",
+      ].join("\n\n"),
+      jsonMode: true,
+    });
+    const parsed = aiReportSchema.parse(JSON.parse(raw));
+    return {
+      content: { ...parsed, disclaimer: DISCLAIMER },
+      generatedBy: "deepseek",
+    };
+  } catch (err) {
+    console.error("generateReportContent: fallback determinístico:", err);
+    return fallback();
+  }
 }
 
 export function dimensionBars(dimensions: Record<string, number>) {

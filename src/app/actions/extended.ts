@@ -257,9 +257,11 @@ export async function requestGuardianAuthAction(
     body: `Hola${name ? ` ${name}` : ""},\n\nTu código de autorización ENRUTA es: ${otp}\nVálido por 30 minutos.\n\nSi no solicitaste esto, ignora este mensaje.`,
   });
 
+  const isDemoEnv =
+    process.env.NODE_ENV !== "production" && !process.env.SMTP_HOST;
   return {
     ok: true,
-    demoOtp: process.env.SMTP_HOST ? undefined : otp,
+    demoOtp: isDemoEnv ? otp : undefined,
   };
 }
 

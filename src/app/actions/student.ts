@@ -20,7 +20,7 @@ import {
   assessmentSections,
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
-import { buildReportContent } from "@/lib/reports";
+import { generateReportContent } from "@/lib/reports";
 import { computeDimensionScores, detectFlags } from "@/lib/scoring";
 import { getStudentByUserId } from "@/lib/students";
 import type { ActionState } from "./auth";
@@ -340,7 +340,7 @@ export async function submitAssessmentAction(
     })
     .returning();
 
-  const content = buildReportContent({
+  const { content, generatedBy } = await generateReportContent({
     studentName: row.user.fullName,
     gradeLevel: row.student.gradeLevel,
     dimensions: scored.dimensions,
@@ -358,7 +358,7 @@ export async function submitAssessmentAction(
       status: "pending_review",
       content,
       dimensionsSnapshot: scored.dimensions,
-      generatedBy: "system",
+      generatedBy,
     })
     .returning();
 
